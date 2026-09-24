@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Noorun Ala Noor Meelad Fest 2026 | Guideon Learning Hub</title>
+    <script type="text/javascript">
+      (function (l) {
+        var pathSegments = l.pathname.slice(1).split("/");
+        var repoName = pathSegments[0] || "noorun-ala-noor-2026";
+        var isDocs = pathSegments[1] === "docs";
+        var base = isDocs ? "/" + repoName + "/docs" : "/" + repoName;
+
+        var subSegments = isDocs ? pathSegments.slice(2) : pathSegments.slice(1);
+        var p = subSegments.join("/");
+
+        if (p && !p.startsWith("dist")) {
+          var redirectUrl =
+            l.protocol +
+            "//" +
+            l.hostname +
+            (l.port ? ":" + l.port : "") +
+            base +
+            "/?/" +
+            p.replace(/&/g, "~and~") +
+            (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+            l.hash;
+          l.replace(redirectUrl);
+        } else {
+          l.replace(
+            l.protocol +
+            "//" +
+            l.hostname +
+            (l.port ? ":" + l.port : "") +
+            base +
+            "/",
+          );
+        }
+      })(window.location);
+    </script>
+  </head>
+  <body></body>
+</html>
