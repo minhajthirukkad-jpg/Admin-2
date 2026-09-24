@@ -1,42 +1,48 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Noorun Ala Noor Meelad Fest 2026 | Guideon Learning Hub</title>
+    <meta
+      name="description"
+      content="Official festival scoreboard, real-time live program status, searchable results, and admin management for Noorun Ala Noor Meelad Fest 2026."
+    />
+    <meta property="og:title" content="Noorun Ala Noor Meelad Fest 2026" />
+    <meta
+      property="og:description"
+      content="Official festival scoreboard, real-time live program status, searchable results, and admin management for Noorun Ala Noor Meelad Fest 2026."
+    />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="stylesheet" crossorigin href="/assets/styles.css" />
     <script type="text/javascript">
+      // GitHub Pages / SPA redirect decoder for sub-routes (/admin, /check-results)
       (function (l) {
-        var pathSegments = l.pathname.slice(1).split("/");
-        var repoName = pathSegments[0] || "noorun-ala-noor-2026";
-        var isDocs = pathSegments[1] === "docs";
-        var base = isDocs ? "/" + repoName + "/docs" : "/" + repoName;
-
-        var subSegments = isDocs ? pathSegments.slice(2) : pathSegments.slice(1);
-        var p = subSegments.join("/");
-
-        if (p && !p.startsWith("dist")) {
-          var redirectUrl =
-            l.protocol +
-            "//" +
-            l.hostname +
-            (l.port ? ":" + l.port : "") +
-            base +
-            "/?/" +
-            p.replace(/&/g, "~and~") +
-            (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
-            l.hash;
-          l.replace(redirectUrl);
-        } else {
-          l.replace(
-            l.protocol +
-            "//" +
-            l.hostname +
-            (l.port ? ":" + l.port : "") +
-            base +
-            "/",
-          );
+        if (l.search && l.search[1] === "/") {
+          var decoded = l.search
+            .slice(1)
+            .split("&")
+            .map(function (s) {
+              return s.replace(/~and~/g, "&");
+            })
+            .join("?");
+          var basePath = l.pathname.endsWith("/") ? l.pathname.slice(0, -1) : l.pathname;
+          var subPath = decoded.startsWith("/") ? decoded : "/" + decoded;
+          if (basePath && subPath.startsWith(basePath)) {
+            window.history.replaceState(null, null, subPath + l.hash);
+          } else {
+            window.history.replaceState(
+              null,
+              null,
+              (basePath === "/" ? "" : basePath) + subPath + l.hash,
+            );
+          }
         }
       })(window.location);
     </script>
+    <script type="module" crossorigin src="/assets/client.js"></script>
   </head>
-  <body></body>
+  <body class="bg-background text-foreground antialiased min-h-screen">
+    <div id="root"></div>
+  </body>
 </html>

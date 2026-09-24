@@ -9,12 +9,15 @@ import {
   List,
   Lock,
   Medal,
+  Radio,
   Search,
+  Settings2,
   Sparkles,
   Trophy,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -28,6 +31,7 @@ import {
   GuideonInstitutionLogo,
 } from "@/components/festival-header-branding";
 import { SecretRankModal } from "@/components/secret-rank-modal";
+import { AdminManagementPortal } from "@/components/admin-management-portal";
 import { useFestivalData } from "@/hooks/use-festival-data";
 
 export const Route = createFileRoute("/")({
@@ -57,19 +61,16 @@ function IndexPage() {
     useFestivalData();
 
   const [secretModalOpen, setSecretModalOpen] = useState(false);
+  const [adminPortalOpen, setAdminPortalOpen] = useState(false);
   const [positionFilter, setPositionFilter] = useState<"all" | "1st" | "2nd" | "3rd">("all");
   const [resultsView, setResultsView] = useState<"podium" | "table">("podium");
 
-  // Trigger surprising secret rank reveal animation on first site opening in this session
+  // Trigger secret rank reveal automatically when site opens, with auto-close after reveal
   useEffect(() => {
-    const hasSeen = sessionStorage.getItem("mnmf2k26-secret-reveal-seen");
-    if (!hasSeen) {
-      const timer = setTimeout(() => {
-        setSecretModalOpen(true);
-        sessionStorage.setItem("mnmf2k26-secret-reveal-seen", "true");
-      }, 450);
-      return () => clearTimeout(timer);
-    }
+    const timer = setTimeout(() => {
+      setSecretModalOpen(true);
+    }, 450);
+    return () => clearTimeout(timer);
   }, []);
 
   const highestScore = useMemo(
@@ -166,11 +167,14 @@ function IndexPage() {
               NOORUN ALA NOOR
             </h1>
 
-            <div className="mt-2 flex items-center justify-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground/80 sm:text-sm">
                 guideon learning hub
               </p>
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 ml-1">
+                Live Auto-Sync
+              </span>
             </div>
           </div>
 
@@ -183,18 +187,22 @@ function IndexPage() {
                 size="sm"
                 onClick={() => setSecretModalOpen(true)}
                 title="Open Secret Rank Table Reveal"
-                className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 text-xs font-bold gap-1 shadow-sm"
+                className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 text-xs font-bold gap-1 shadow-sm cursor-pointer"
               >
                 <Crown className="size-3.5" />
                 <span>Reveal Standings</span>
               </Button>
-              <Button asChild variant="outline" size="sm" title="Admin panel">
-                <Link to="/admin">
-                  <Lock className="size-3.5 mr-1" />
-                  <span className="text-xs">Admin</span>
-                </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAdminPortalOpen(true)}
+                title="Open Integrated Admin Management Panel"
+                className="border-primary/40 text-primary hover:bg-primary/10 text-xs font-bold gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Lock className="size-3.5" />
+                <span>Admin Panel</span>
               </Button>
-              <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+              <Button asChild size="sm" className="bg-primary hover:bg-primary/90 cursor-pointer">
                 <Link to="/check-results">
                   <Search className="size-3.5 mr-1.5" />
                   <span className="text-xs font-semibold">Results</span>
@@ -314,7 +322,85 @@ function IndexPage() {
           )}
         </section>
 
-        {/* 2. Latest / Outed Results Section with 1st, 2nd, and 3rd Positions */}
+        {/* 2. Category Toppers (Positioned above Latest Results) */}
+        <section className="glass-card p-5" aria-label="Category Toppers">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Award className="size-5 text-amber-500" />
+              <div>
+                <h2 className="text-lg font-semibold">Category Toppers</h2>
+                <p className="text-xs text-muted-foreground">
+                  Top performing individual competitors across each category
+                </p>
+              </div>
+            </div>
+            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              Top 3 by Category
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {categoryToppers.map(({ category, top }) => (
+              <div
+                key={category}
+                className="rounded-xl border border-border/80 bg-background/60 p-4 shadow-sm transition-all hover:border-primary/40"
+              >
+                <div className="mb-3 flex items-center justify-between border-b border-border/50 pb-2">
+                  <h3 className="text-sm font-bold text-primary">{category}</h3>
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    {top.length} {top.length === 1 ? "Topper" : "Toppers"}
+                  </span>
+                </div>
+                {top.length === 0 ? (
+                  <p className="py-2 text-sm text-muted-foreground">No results yet.</p>
+                ) : (
+                  <ol className="space-y-2">
+                    {top.map((t, idx) => (
+                      <li
+                        key={`${t.chest}-${t.name}-${idx}`}
+                        className={`flex items-center gap-3 rounded-lg border px-3 py-2 ${
+                          idx === 0
+                            ? "border-amber-500/30 bg-amber-500/5"
+                            : idx === 1
+                              ? "border-slate-500/20 bg-slate-500/5"
+                              : "border-border/70 bg-background/60"
+                        }`}
+                      >
+                        <span
+                          className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                            idx === 0
+                              ? "bg-amber-500 text-neutral-950 shadow-xs"
+                              : idx === 1
+                                ? "bg-slate-400 text-neutral-950"
+                                : "bg-amber-800 text-white"
+                          }`}
+                        >
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {t.name}{" "}
+                            {t.chest !== "—" && (
+                              <span className="text-xs font-normal text-muted-foreground">
+                                (#{t.chest})
+                              </span>
+                            )}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">{t.team}</p>
+                        </div>
+                        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                          {t.score} pts
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. Latest / Outed Results Section with 1st, 2nd, and 3rd Positions */}
         <section className="glass-card p-5" aria-label="Latest Outed Results">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
@@ -614,7 +700,7 @@ function IndexPage() {
           )}
         </section>
 
-        {/* 3. Program Status Table */}
+        {/* 4. Program Status Table */}
         <section className="glass-card p-5" aria-label="Program Status">
           <div className="mb-4 flex items-center gap-2">
             <Clock3 className="size-5 text-primary" />
@@ -670,49 +756,31 @@ function IndexPage() {
             </div>
           )}
         </section>
-
-        {/* 4. Category Toppers */}
-        <section className="glass-card p-5" aria-label="Category Toppers">
-          <div className="mb-4 flex items-center gap-2">
-            <Award className="size-5 text-gold" />
-            <h2 className="text-lg font-semibold">Toppers</h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {categoryToppers.map(({ category, top }) => (
-              <div key={category} className="rounded-xl border border-border bg-background/60 p-4">
-                <h3 className="mb-3 text-base font-semibold text-primary">{category}</h3>
-                {top.length === 0 ? (
-                  <p className="py-2 text-sm text-muted-foreground">No results yet.</p>
-                ) : (
-                  <ol className="space-y-2">
-                    {top.map((t, idx) => (
-                      <li
-                        key={`${t.chest}-${t.name}-${idx}`}
-                        className="flex items-center gap-3 rounded-lg border border-border bg-background/60 px-3 py-2"
-                      >
-                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                          {idx + 1}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {t.name}{" "}
-                            <span className="text-xs text-muted-foreground">(#{t.chest})</span>
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">{t.team}</p>
-                        </div>
-                        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
-                          {t.score} pts
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
+
+      {/* Floating Quick Admin Panel Toggle Button */}
+      <aside aria-label="Quick Admin Access" className="fixed bottom-5 right-5 z-40">
+        <Button
+          onClick={() => setAdminPortalOpen(true)}
+          className="rounded-full shadow-2xl bg-gradient-to-r from-amber-500 to-yellow-600 text-neutral-950 font-bold px-4 py-2 text-xs flex items-center gap-2 border border-amber-400 hover:scale-105 transition-transform cursor-pointer"
+          title="Open Integrated Admin Portal"
+        >
+          <Settings2 className="size-4" />
+          <span>Admin Portal</span>
+          <span className="size-2 rounded-full bg-emerald-700 animate-ping" />
+        </Button>
+      </aside>
+
+      {/* Integrated Admin Management Portal Modal with Live Syncing */}
+      <Dialog open={adminPortalOpen} onOpenChange={setAdminPortalOpen}>
+        <DialogContent className="max-w-6xl w-[96vw] max-h-[94vh] overflow-y-auto p-2 sm:p-5 bg-background/95 backdrop-blur-md border border-amber-500/30 shadow-2xl rounded-3xl">
+          <DialogTitle className="sr-only">Admin Management Portal</DialogTitle>
+          <DialogDescription className="sr-only">
+            Festival results, teams, programs, and live score management with instant auto-syncing.
+          </DialogDescription>
+          <AdminManagementPortal onClose={() => setAdminPortalOpen(false)} isEmbedded={true} />
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

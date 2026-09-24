@@ -44,7 +44,7 @@ for (const dir of [distAssetsDir, docsAssetsDir]) {
 }
 
 // 4. Clean HTML Template for index.html (SPA with query-param router restore)
-const getIndexHtml = (assetPrefix = "./") => `<!doctype html>
+const getIndexHtml = (assetPrefix = "/") => `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -62,7 +62,7 @@ const getIndexHtml = (assetPrefix = "./") => `<!doctype html>
     <link rel="icon" type="image/x-icon" href="${assetPrefix}favicon.ico" />
     <link rel="stylesheet" crossorigin href="${assetPrefix}assets/styles.css" />
     <script type="text/javascript">
-      // GitHub Pages SPA redirect decoder for sub-routes (/admin, /check-results)
+      // GitHub Pages / SPA redirect decoder for sub-routes (/admin, /check-results)
       (function (l) {
         if (l.search && l.search[1] === "/") {
           var decoded = l.search
@@ -72,13 +72,17 @@ const getIndexHtml = (assetPrefix = "./") => `<!doctype html>
               return s.replace(/~and~/g, "&");
             })
             .join("?");
-          var basePath = l.pathname.replace(/\\/$/, "");
+          var basePath = l.pathname.endsWith("/") ? l.pathname.slice(0, -1) : l.pathname;
           var subPath = decoded.startsWith("/") ? decoded : "/" + decoded;
-          window.history.replaceState(
-            null,
-            null,
-            basePath + subPath + l.hash,
-          );
+          if (basePath && subPath.startsWith(basePath)) {
+            window.history.replaceState(null, null, subPath + l.hash);
+          } else {
+            window.history.replaceState(
+              null,
+              null,
+              (basePath === "/" ? "" : basePath) + subPath + l.hash,
+            );
+          }
         }
       })(window.location);
     </script>
@@ -90,54 +94,9 @@ const getIndexHtml = (assetPrefix = "./") => `<!doctype html>
 </html>
 `;
 
-// 5. HTML Template for 404.html (Redirects GitHub Pages sub-routes to SPA query router)
-const get404Html = () => `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Noorun Ala Noor Meelad Fest 2026 | Guideon Learning Hub</title>
-    <script type="text/javascript">
-      (function (l) {
-        var pathSegments = l.pathname.slice(1).split("/");
-        var repoName = pathSegments[0] || "noorun-ala-noor-2026";
-        var isDocs = pathSegments[1] === "docs";
-        var base = isDocs ? "/" + repoName + "/docs" : "/" + repoName;
-
-        var subSegments = isDocs ? pathSegments.slice(2) : pathSegments.slice(1);
-        var p = subSegments.join("/");
-
-        if (p && !p.startsWith("dist")) {
-          var redirectUrl =
-            l.protocol +
-            "//" +
-            l.hostname +
-            (l.port ? ":" + l.port : "") +
-            base +
-            "/?/" +
-            p.replace(/&/g, "~and~") +
-            (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
-            l.hash;
-          l.replace(redirectUrl);
-        } else {
-          l.replace(
-            l.protocol +
-            "//" +
-            l.hostname +
-            (l.port ? ":" + l.port : "") +
-            base +
-            "/",
-          );
-        }
-      })(window.location);
-    </script>
-  </head>
-  <body></body>
-</html>
-`;
-
 // Write to dist/
-fs.writeFileSync(path.join(distDir, "index.html"), getIndexHtml("./"), "utf8");
-fs.writeFileSync(path.join(distDir, "404.html"), get404Html(), "utf8");
+fs.writeFileSync(path.join(distDir, "index.html"), getIndexHtml("/"), "utf8");
+fs.writeFileSync(path.join(distDir, "404.html"), getIndexHtml("/"), "utf8");
 fs.writeFileSync(path.join(distDir, ".nojekyll"), "", "utf8");
 
 // Sub-routes in dist/
@@ -147,13 +106,13 @@ for (const r of routes) {
   if (!fs.existsSync(distRouteDir)) {
     fs.mkdirSync(distRouteDir, { recursive: true });
   }
-  fs.writeFileSync(path.join(distRouteDir, "index.html"), getIndexHtml("../"), "utf8");
-  fs.writeFileSync(path.join(distDir, `${r}.html`), getIndexHtml("./"), "utf8");
+  fs.writeFileSync(path.join(distRouteDir, "index.html"), getIndexHtml("/"), "utf8");
+  fs.writeFileSync(path.join(distDir, `${r}.html`), getIndexHtml("/"), "utf8");
 }
 
 // Write to docs/
-fs.writeFileSync(path.join(docsDir, "index.html"), getIndexHtml("./"), "utf8");
-fs.writeFileSync(path.join(docsDir, "404.html"), get404Html(), "utf8");
+fs.writeFileSync(path.join(docsDir, "index.html"), getIndexHtml("/"), "utf8");
+fs.writeFileSync(path.join(docsDir, "404.html"), getIndexHtml("/"), "utf8");
 fs.writeFileSync(path.join(docsDir, ".nojekyll"), "", "utf8");
 
 // Sub-routes in docs/
@@ -162,26 +121,11 @@ for (const r of routes) {
   if (!fs.existsSync(routeDir)) {
     fs.mkdirSync(routeDir, { recursive: true });
   }
-  fs.writeFileSync(path.join(routeDir, "index.html"), getIndexHtml("../"), "utf8");
-  fs.writeFileSync(path.join(docsDir, `${r}.html`), getIndexHtml("./"), "utf8");
-}
-
-// Write to root
-fs.writeFileSync(path.join(rootDir, "index.html"), getIndexHtml("./docs/"), "utf8");
-fs.writeFileSync(path.join(rootDir, "404.html"), get404Html(), "utf8");
-fs.writeFileSync(path.join(rootDir, ".nojekyll"), "", "utf8");
-
-// Sub-routes in root
-for (const r of routes) {
-  const rootRouteDir = path.join(rootDir, r);
-  if (!fs.existsSync(rootRouteDir)) {
-    fs.mkdirSync(rootRouteDir, { recursive: true });
-  }
-  fs.writeFileSync(path.join(rootRouteDir, "index.html"), getIndexHtml("../docs/"), "utf8");
-  fs.writeFileSync(path.join(rootDir, `${r}.html`), getIndexHtml("./docs/"), "utf8");
+  fs.writeFileSync(path.join(routeDir, "index.html"), getIndexHtml("/"), "utf8");
+  fs.writeFileSync(path.join(docsDir, `${r}.html`), getIndexHtml("/"), "utf8");
 }
 
 // Clean temporary dist-client folder
 fs.rmSync(distClientDir, { recursive: true, force: true });
 
-console.log("Static build complete: dist/, docs/, and root are populated with pristine assets.");
+console.log("Static build complete: dist/ and docs/ are populated with pristine assets.");

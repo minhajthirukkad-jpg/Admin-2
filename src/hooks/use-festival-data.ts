@@ -77,6 +77,15 @@ export function useFestivalData() {
   }, []);
 
   useEffect(() => {
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+        channel = new BroadcastChannel("mnmf2k26-live-data");
+      }
+    } catch {
+      channel = null;
+    }
+
     const handleSync = (e: Event) => {
       // Ignore sync events triggered locally within the same React state session
       if (e instanceof CustomEvent && e.detail?.source === "local") {
@@ -85,18 +94,67 @@ export function useFestivalData() {
       reloadAll();
     };
 
+    const handleChannelMessage = (e: MessageEvent) => {
+      if (e.data?.type === "MNMF_SYNC") {
+        reloadAll();
+      }
+    };
+
+    if (channel) {
+      channel.onmessage = handleChannelMessage;
+    }
+
     window.addEventListener(MNMF_DATA_SYNC_EVENT, handleSync);
     window.addEventListener("storage", handleSync);
+    window.addEventListener("focus", reloadAll);
+
+    let lastKnownTimestamp = "";
+    try {
+      lastKnownTimestamp = window.localStorage.getItem("mnmf2k26-last-update") || "";
+    } catch {
+      // Ignore
+    }
+
+    const interval = setInterval(() => {
+      try {
+        const currentTimestamp = window.localStorage.getItem("mnmf2k26-last-update") || "";
+        if (currentTimestamp && currentTimestamp !== lastKnownTimestamp) {
+          lastKnownTimestamp = currentTimestamp;
+          reloadAll();
+        }
+      } catch {
+        // Ignore
+      }
+    }, 1200);
 
     return () => {
+      clearInterval(interval);
+      if (channel) {
+        channel.close();
+      }
       window.removeEventListener(MNMF_DATA_SYNC_EVENT, handleSync);
       window.removeEventListener("storage", handleSync);
+      window.removeEventListener("focus", reloadAll);
     };
   }, [reloadAll]);
 
   const notifyChange = useCallback(() => {
     if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem("mnmf2k26-last-update", String(Date.now()));
+      } catch {
+        // Ignore
+      }
       window.dispatchEvent(new CustomEvent(MNMF_DATA_SYNC_EVENT, { detail: { source: "local" } }));
+      try {
+        if ("BroadcastChannel" in window) {
+          const channel = new BroadcastChannel("mnmf2k26-live-data");
+          channel.postMessage({ type: "MNMF_SYNC", timestamp: Date.now() });
+          channel.close();
+        }
+      } catch {
+        // Ignore channel errors
+      }
     }
   }, []);
 

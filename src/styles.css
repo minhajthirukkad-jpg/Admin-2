@@ -177,7 +177,7 @@
   .animate-ticker {
     display: inline-flex;
     width: max-content;
-    animation: ticker 28s linear infinite;
+    animation: ticker 70s linear infinite;
     will-change: transform;
   }
   .ticker-track:hover,

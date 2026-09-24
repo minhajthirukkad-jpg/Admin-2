@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Award, Crown, Eye, Flame, RotateCcw, Sparkles, Trophy, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ interface SecretRankModalProps {
   onClose: () => void;
   rankedTeams: TeamRank[];
   highestScore: number;
+  autoCloseSeconds?: number;
 }
 
 export function SecretRankModal({
@@ -24,17 +25,31 @@ export function SecretRankModal({
   onClose,
   rankedTeams,
   highestScore,
+  autoCloseSeconds = 7,
 }: SecretRankModalProps) {
   // Phase 1: 'vault' (the dramatic locked secret opening), Phase 2: 'revealed' (the glorious standings)
   const [phase, setPhase] = useState<"vault" | "revealed">("vault");
   const [countdown, setCountdown] = useState(3);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [autoCloseRemaining, setAutoCloseRemaining] = useState<number>(autoCloseSeconds);
+  const [isAutoClosePaused, setIsAutoClosePaused] = useState(false);
+
+  const triggerReveal = useCallback(() => {
+    setPhase("revealed");
+    setShowConfetti(true);
+    setAutoCloseRemaining(autoCloseSeconds);
+    setTimeout(() => {
+      setShowConfetti(false);
+    }, 4500);
+  }, [autoCloseSeconds]);
 
   useEffect(() => {
     if (!isOpen) {
       setPhase("vault");
       setCountdown(3);
       setShowConfetti(false);
+      setAutoCloseRemaining(autoCloseSeconds);
+      setIsAutoClosePaused(false);
       return;
     }
 
@@ -47,23 +62,40 @@ export function SecretRankModal({
         clearInterval(timer);
         triggerReveal();
       }
-    }, 850);
+    }, 800);
 
     return () => clearInterval(timer);
-  }, [isOpen]);
+  }, [isOpen, autoCloseSeconds, triggerReveal]);
 
-  const triggerReveal = () => {
-    setPhase("revealed");
-    setShowConfetti(true);
-    setTimeout(() => {
-      setShowConfetti(false);
-    }, 4500);
-  };
+  // Auto-close countdown when standings are revealed
+  useEffect(() => {
+    if (!isOpen || phase !== "revealed" || isAutoClosePaused) return;
+
+    if (autoCloseRemaining <= 0) {
+      onClose();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setAutoCloseRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onClose();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isOpen, phase, isAutoClosePaused, autoCloseRemaining, onClose]);
 
   const handleReplay = () => {
     setPhase("vault");
     setCountdown(3);
     setShowConfetti(false);
+    setAutoCloseRemaining(autoCloseSeconds);
+    setIsAutoClosePaused(false);
     let count = 3;
     const timer = setInterval(() => {
       count -= 1;
@@ -72,7 +104,7 @@ export function SecretRankModal({
         clearInterval(timer);
         triggerReveal();
       }
-    }, 850);
+    }, 800);
   };
 
   if (!isOpen) return null;
@@ -349,21 +381,37 @@ export function SecretRankModal({
 
             {/* Bottom Actions */}
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleReplay}
-                className="border-white/20 text-white hover:bg-white/10 gap-1.5"
-              >
-                <RotateCcw className="size-3.5" /> Replay Reveal
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReplay}
+                  className="border-white/20 text-white hover:bg-white/10 gap-1.5 text-xs"
+                >
+                  <RotateCcw className="size-3.5" /> Replay Reveal
+                </Button>
+                {!isAutoClosePaused ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsAutoClosePaused(true)}
+                    className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors"
+                  >
+                    <span>Auto-closing in {autoCloseRemaining}s</span>
+                    <span className="underline ml-0.5 text-[10px] text-amber-200">Keep open</span>
+                  </button>
+                ) : (
+                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-neutral-300">
+                    Auto-close paused
+                  </span>
+                )}
+              </div>
 
               <Button
                 size="sm"
                 onClick={onClose}
-                className="bg-gradient-to-r from-amber-500 to-yellow-500 font-bold text-neutral-950 shadow-md hover:from-amber-400 hover:to-yellow-400"
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 font-bold text-neutral-950 shadow-md hover:from-amber-400 hover:to-yellow-400 text-xs"
               >
-                <Eye className="size-3.5 mr-1.5" /> Explore Full Scoreboard
+                <Eye className="size-3.5 mr-1.5" /> Explore Scoreboard
               </Button>
             </div>
           </div>
