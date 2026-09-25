@@ -13,15 +13,18 @@ export function getRouter() {
 
   let basepath: string | undefined = undefined;
   if (typeof window !== "undefined") {
-    const p = window.location.pathname;
-    const knownTopRoutes = ["admin", "check-results", "unlock", "assets"];
-    const segments = p.split("/").filter(Boolean);
+    const isGitHubPages = window.location.hostname.endsWith("github.io");
+    if (isGitHubPages) {
+      const p = window.location.pathname;
+      const knownTopRoutes = ["admin", "check-results", "unlock", "assets"];
+      const segments = p.split("/").filter(Boolean);
 
-    if (segments.length > 0 && !knownTopRoutes.includes(segments[0].toLowerCase())) {
-      if (segments.length > 1 && segments[1].toLowerCase() === "docs") {
-        basepath = `/${segments[0]}/docs`;
-      } else {
-        basepath = `/${segments[0]}`;
+      if (segments.length > 0 && !knownTopRoutes.includes(segments[0].toLowerCase())) {
+        if (segments.length > 1 && segments[1].toLowerCase() === "docs") {
+          basepath = `/${segments[0]}/docs`;
+        } else {
+          basepath = `/${segments[0]}`;
+        }
       }
     }
   }

@@ -91,11 +91,9 @@ interface AdminPortalProps {
 }
 
 export function AdminManagementPortal({ onClose, isEmbedded = false }: AdminPortalProps) {
-  const [isClient, setIsClient] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     if (isAdminUnlocked()) {
       setUnlocked(true);
       return;
@@ -128,14 +126,6 @@ export function AdminManagementPortal({ onClose, isEmbedded = false }: AdminPort
     setUnlocked(false);
     toast.info("Admin panel locked");
   }, []);
-
-  if (!isClient) {
-    return (
-      <div className="flex min-h-[350px] items-center justify-center p-8 text-center">
-        <RefreshCw className="size-6 animate-spin text-amber-500" />
-      </div>
-    );
-  }
 
   if (!unlocked) {
     return (

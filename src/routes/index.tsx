@@ -3,8 +3,11 @@ import {
   Award,
   BellRing,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock3,
   Crown,
+  KeyRound,
   LayoutGrid,
   List,
   Lock,
@@ -12,12 +15,12 @@ import {
   Radio,
   Search,
   Settings2,
+  ShieldCheck,
   Sparkles,
   Trophy,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -61,17 +64,19 @@ function IndexPage() {
     useFestivalData();
 
   const [secretModalOpen, setSecretModalOpen] = useState(false);
-  const [adminPortalOpen, setAdminPortalOpen] = useState(false);
   const [positionFilter, setPositionFilter] = useState<"all" | "1st" | "2nd" | "3rd">("all");
   const [resultsView, setResultsView] = useState<"podium" | "table">("podium");
+  const [adminPanelOpen, setAdminPanelOpen] = useState(true);
 
-  // Trigger secret rank reveal automatically when site opens, with auto-close after reveal
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSecretModalOpen(true);
-    }, 450);
-    return () => clearTimeout(timer);
-  }, []);
+  const scrollToAdmin = () => {
+    setAdminPanelOpen(true);
+    setTimeout(() => {
+      const el = document.getElementById("admin-portal-section");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
+  };
 
   const highestScore = useMemo(
     () => Math.max(...rankedTeams.map((t) => t.grand), 1),
@@ -195,9 +200,9 @@ function IndexPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setAdminPortalOpen(true)}
-                title="Open Integrated Admin Management Panel"
+                onClick={scrollToAdmin}
                 className="border-primary/40 text-primary hover:bg-primary/10 text-xs font-bold gap-1.5 shadow-sm cursor-pointer"
+                title="Open Admin Panel at bottom of page"
               >
                 <Lock className="size-3.5" />
                 <span>Admin Panel</span>
@@ -756,31 +761,91 @@ function IndexPage() {
             </div>
           )}
         </section>
+
+        {/* =========================================================================
+            BOTTOM-SIDE ADMIN MANAGEMENT PORTAL (Slide-down & Live Sync)
+            ========================================================================= */}
+        <section
+          id="admin-portal-section"
+          className="mt-14 scroll-mt-6 border-t-2 border-amber-500/30 pt-8"
+          aria-label="Festival Administration Portal"
+        >
+          {/* Admin Header Banner */}
+          <div className="glass-card mb-6 overflow-hidden border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-primary/10 p-4 sm:p-6 shadow-xl">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3.5">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-500 shadow-md">
+                  <ShieldCheck className="size-6 text-amber-500" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl font-display">
+                      Festival Administration & Management Portal
+                    </h2>
+                    <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      <Radio className="size-2.5 animate-pulse text-emerald-500" /> Live Sync Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Noorun Ala Noor · Meelad Fest 2026 | Guideon Learning Hub
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons & Credentials Badge */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-background/80 px-2.5 py-1.5 text-xs text-muted-foreground shadow-sm">
+                  <KeyRound className="size-3.5 text-amber-500" />
+                  <span className="text-[11px] font-medium">User:</span>
+                  <code className="font-mono text-[11px] font-bold text-foreground">admin</code>
+                  <span className="text-muted-foreground/50">|</span>
+                  <span className="text-[11px] font-medium">Pass:</span>
+                  <code className="font-mono text-[11px] font-bold text-amber-500">MNMF2K26</code>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAdminPanelOpen(!adminPanelOpen)}
+                  className="gap-1.5 border-amber-500/40 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer shadow-sm"
+                >
+                  {adminPanelOpen ? (
+                    <>
+                      <ChevronUp className="size-3.5" />
+                      <span>Slide Up / Hide</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="size-3.5" />
+                      <span>Slide Down / Open Portal</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Collapsible / Slide-Down Admin Management Portal Body */}
+          {adminPanelOpen && (
+            <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+              <AdminManagementPortal isEmbedded={true} />
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Floating Quick Admin Panel Toggle Button */}
       <aside aria-label="Quick Admin Access" className="fixed bottom-5 right-5 z-40">
         <Button
-          onClick={() => setAdminPortalOpen(true)}
+          onClick={scrollToAdmin}
           className="rounded-full shadow-2xl bg-gradient-to-r from-amber-500 to-yellow-600 text-neutral-950 font-bold px-4 py-2 text-xs flex items-center gap-2 border border-amber-400 hover:scale-105 transition-transform cursor-pointer"
-          title="Open Integrated Admin Portal"
+          title="Scroll down to Admin Panel"
         >
           <Settings2 className="size-4" />
-          <span>Admin Portal</span>
+          <span>Admin Panel</span>
           <span className="size-2 rounded-full bg-emerald-700 animate-ping" />
         </Button>
       </aside>
-
-      {/* Integrated Admin Management Portal Modal with Live Syncing */}
-      <Dialog open={adminPortalOpen} onOpenChange={setAdminPortalOpen}>
-        <DialogContent className="max-w-6xl w-[96vw] max-h-[94vh] overflow-y-auto p-2 sm:p-5 bg-background/95 backdrop-blur-md border border-amber-500/30 shadow-2xl rounded-3xl">
-          <DialogTitle className="sr-only">Admin Management Portal</DialogTitle>
-          <DialogDescription className="sr-only">
-            Festival results, teams, programs, and live score management with instant auto-syncing.
-          </DialogDescription>
-          <AdminManagementPortal onClose={() => setAdminPortalOpen(false)} isEmbedded={true} />
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

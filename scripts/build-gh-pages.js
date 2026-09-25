@@ -8,31 +8,35 @@ const distDir = path.join(rootDir, "dist");
 const distAssetsDir = path.join(distDir, "assets");
 const docsDir = path.join(rootDir, "docs");
 const docsAssetsDir = path.join(docsDir, "assets");
+const outputPublicDir = path.join(rootDir, ".output", "public");
+const outputPublicAssetsDir = path.join(outputPublicDir, "assets");
 
 console.log("Building client SPA for GitHub Pages & static hosting...");
 execSync("npx vite build --config vite.client.config.ts", { stdio: "inherit" });
 
 // Ensure target asset directories exist
-for (const d of [distAssetsDir, docsAssetsDir]) {
+for (const d of [distAssetsDir, docsAssetsDir, outputPublicAssetsDir]) {
   if (!fs.existsSync(d)) {
     fs.mkdirSync(d, { recursive: true });
   }
 }
 
-// 1. Copy built assets to dist/assets and docs/assets
+// 1. Copy built assets to dist/assets, docs/assets, and .output/public/assets
 if (fs.existsSync(path.join(distClientDir, "assets"))) {
   fs.cpSync(path.join(distClientDir, "assets"), distAssetsDir, { recursive: true });
   fs.cpSync(path.join(distClientDir, "assets"), docsAssetsDir, { recursive: true });
+  fs.cpSync(path.join(distClientDir, "assets"), outputPublicAssetsDir, { recursive: true });
 }
 
-// 2. Copy public assets (favicon, images, etc.) to dist and docs
+// 2. Copy public assets (favicon, images, etc.) to dist, docs, and .output/public
 if (fs.existsSync(path.join(rootDir, "public"))) {
   fs.cpSync(path.join(rootDir, "public"), distDir, { recursive: true });
   fs.cpSync(path.join(rootDir, "public"), docsDir, { recursive: true });
+  fs.cpSync(path.join(rootDir, "public"), outputPublicDir, { recursive: true });
 }
 
-// 3. Ensure legacy aliases exist in dist and docs asset folders
-for (const dir of [distAssetsDir, docsAssetsDir]) {
+// 3. Ensure legacy aliases exist in asset folders
+for (const dir of [distAssetsDir, docsAssetsDir, outputPublicAssetsDir]) {
   if (fs.existsSync(path.join(dir, "client.js"))) {
     fs.copyFileSync(path.join(dir, "client.js"), path.join(dir, "client-BNaYxvc8.js"));
     fs.copyFileSync(path.join(dir, "client.js"), path.join(dir, "index-BNaYxvc8.js"));
@@ -123,6 +127,21 @@ for (const r of routes) {
   }
   fs.writeFileSync(path.join(routeDir, "index.html"), getIndexHtml("/"), "utf8");
   fs.writeFileSync(path.join(docsDir, `${r}.html`), getIndexHtml("/"), "utf8");
+}
+
+// Write to .output/public/
+fs.writeFileSync(path.join(outputPublicDir, "index.html"), getIndexHtml("/"), "utf8");
+fs.writeFileSync(path.join(outputPublicDir, "404.html"), getIndexHtml("/"), "utf8");
+fs.writeFileSync(path.join(outputPublicDir, ".nojekyll"), "", "utf8");
+
+// Sub-routes in .output/public/
+for (const r of routes) {
+  const routeDir = path.join(outputPublicDir, r);
+  if (!fs.existsSync(routeDir)) {
+    fs.mkdirSync(routeDir, { recursive: true });
+  }
+  fs.writeFileSync(path.join(routeDir, "index.html"), getIndexHtml("/"), "utf8");
+  fs.writeFileSync(path.join(outputPublicDir, `${r}.html`), getIndexHtml("/"), "utf8");
 }
 
 // Clean temporary dist-client folder
