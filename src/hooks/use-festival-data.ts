@@ -78,11 +78,7 @@ export function useFestivalData() {
       channel = null;
     }
 
-    const handleSync = (e: Event) => {
-      // Ignore sync events triggered locally within the same React state session
-      if (e instanceof CustomEvent && e.detail?.source === "local") {
-        return;
-      }
+    const handleSync = (_e: Event) => {
       reloadAll();
     };
 

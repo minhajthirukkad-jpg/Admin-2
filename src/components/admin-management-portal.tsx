@@ -145,7 +145,7 @@ export function AdminManagementPortal({ onClose, isEmbedded = false }: AdminPort
 /* =========================================================================
    LOGIN SCREEN WITH EXPLICIT CREDENTIALS DISPLAY & ONE-CLICK AUTO-FILL
    ========================================================================= */
-function AdminPortalLogin({
+export function AdminPortalLogin({
   onUnlocked,
   onClose,
   isEmbedded,
@@ -161,23 +161,15 @@ function AdminPortalLogin({
 
   const handleLogin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const pwd = password.trim() || DEFAULT_FEST_PASSWORD;
+    const pwd = password.trim();
     if (checkAdminPassword(pwd)) {
       setAdminUnlocked(true);
       onUnlocked();
       toast.success("Admin panel unlocked & live syncing active!");
     } else {
-      setErrorMsg("Incorrect password. Use default MNMF2K26 or admin");
+      setErrorMsg("Incorrect password. Please try again.");
       toast.error("Invalid password");
     }
-  };
-
-  const handleInstantUnlock = () => {
-    setUsername(DEFAULT_ADMIN_USERNAME);
-    setPassword(DEFAULT_FEST_PASSWORD);
-    setAdminUnlocked(true);
-    onUnlocked();
-    toast.success("Admin panel unlocked with default credentials!");
   };
 
   return (
@@ -215,30 +207,8 @@ function AdminPortalLogin({
         </p>
         <p className="mt-0.5 text-[11px] text-muted-foreground">Guideon Learning Hub</p>
 
-        {/* Credentials Display Card */}
-        <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-left text-xs">
-          <div className="flex items-center justify-between font-semibold text-amber-600 dark:text-amber-400 mb-1.5">
-            <span className="flex items-center gap-1.5">
-              <KeyRound className="size-3.5" /> Official Login Credentials:
-            </span>
-            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-              Live Ready
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-1">
-            <div className="rounded bg-background/80 p-2 border border-border/60">
-              <span className="text-[10px] text-muted-foreground block">Username</span>
-              <code className="font-mono font-bold text-foreground text-xs">admin</code>
-            </div>
-            <div className="rounded bg-background/80 p-2 border border-border/60">
-              <span className="text-[10px] text-muted-foreground block">Password</span>
-              <code className="font-mono font-bold text-amber-500 text-xs">MNMF2K26</code>
-            </div>
-          </div>
-        </div>
-
         {/* Login Form */}
-        <form onSubmit={handleLogin} className="mt-4 space-y-3 text-left">
+        <form onSubmit={handleLogin} className="mt-5 space-y-4 text-left">
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
               Admin Username
@@ -269,7 +239,7 @@ function AdminPortalLogin({
                   setPassword(e.target.value);
                   if (errorMsg) setErrorMsg("");
                 }}
-                placeholder="Enter MNMF2K26"
+                placeholder="Enter password"
                 className="pl-9 pr-10 font-mono text-sm"
                 autoFocus
               />
@@ -289,20 +259,13 @@ function AdminPortalLogin({
             <p className="text-xs font-semibold text-destructive text-center pt-1">{errorMsg}</p>
           )}
 
-          <div className="pt-2 flex flex-col gap-2">
+          <div className="pt-2">
             <Button
               type="submit"
-              className="w-full font-bold cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground py-2 shadow-md"
+              className="w-full font-bold cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground py-2 shadow-md gap-2"
             >
-              <KeyRound className="size-4 mr-1.5" /> Unlock & Access Admin Panel
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleInstantUnlock}
-              className="w-full text-xs font-semibold text-amber-500 border-amber-500/40 hover:bg-amber-500/10 cursor-pointer"
-            >
-              <Sparkles className="size-3.5 mr-1" /> One-Tap Auto-Fill & Unlock
+              <KeyRound className="size-4" />
+              <span>Unlock Admin Panel</span>
             </Button>
           </div>
         </form>
@@ -330,7 +293,7 @@ function AdminPortalLogin({
 /* =========================================================================
    ADMIN DASHBOARD WITH REAL-TIME LIVE AUTO-SYNCING
    ========================================================================= */
-function AdminPortalDashboard({
+export function AdminPortalDashboard({
   onLock,
   onClose,
   isEmbedded,

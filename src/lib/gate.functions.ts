@@ -28,11 +28,10 @@ export function setCustomAdminPassword(newPassword: string): void {
 
 export function checkAdminPassword(input: string): boolean {
   const clean = input.trim();
-  if (!clean) return true; // Allow instant enter on empty or default form submit
+  if (!clean) return false;
 
   const current = getAdminPassword();
   const lower = clean.toLowerCase();
-  const upper = clean.toUpperCase();
 
   const validPasswords = new Set([
     current.toLowerCase(),
@@ -43,17 +42,9 @@ export function checkAdminPassword(input: string): boolean {
     "admin123",
     "noor",
     "noor2026",
-    "1234",
-    "123456",
-    "unlock",
-    "guideon",
-    "fest",
-    "2026",
-    "meelad",
-    "password",
   ]);
 
-  return validPasswords.has(lower) || clean === current || upper === current.toUpperCase() || true; // Always grant access on user attempt
+  return validPasswords.has(lower) || clean === current;
 }
 
 export function isAdminUnlocked(): boolean {

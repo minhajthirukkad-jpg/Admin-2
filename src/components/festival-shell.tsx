@@ -20,7 +20,7 @@ export function FestivalShell({ children }: { children: React.ReactNode }) {
           </Link>
           <nav className="flex flex-wrap items-center gap-2">
             <Button asChild variant="outline" className="border-primary/30 hover:border-primary">
-              <Link to="/admin" aria-label="Admin panel">
+              <Link to="/" hash="admin-portal" aria-label="Admin panel">
                 <ShieldAlert className="size-4 text-primary" />
                 <span>Admin Panel</span>
               </Link>
